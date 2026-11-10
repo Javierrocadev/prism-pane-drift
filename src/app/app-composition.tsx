@@ -9,14 +9,6 @@ import { renderPrismScene } from "./prism-pane-drift-renderer";
 export const appComposition = composeToolcraftApp(appSchema, {
   scene: {
     canvasContent: <PrismPaneDriftCanvas />,
-    rasterFrameRenderer: {
-      baseFileName: "prism-pane-drift",
-      renderFrame: ({ context: ctx, frame, timelineProgress }) => {
-        const w = frame.width;
-        const h = frame.height;
-        const scene = evaluatePrismScene(DEFAULT_PRISM_CONFIG, timelineProgress, w, h);
-        renderPrismScene(ctx, scene, DEFAULT_PRISM_CONFIG, w, h);
-      },
-    },
   },
 });
+
