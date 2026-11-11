@@ -47,3 +47,19 @@ test("Prism Pane Drift: all 5 reference palettes exist", () => {
   assert.ok(PALETTES["emerald-ice"]);
   assert.ok(PALETTES["royal-velvet"]);
 });
+
+test("Prism Pane Drift: custom background colors override palette", () => {
+  const customConfig = {
+    ...DEFAULT_PRISM_CONFIG,
+    bgColor: "#010203",
+    orbColor1: "#ff0011",
+    orbColor2: "#00ff22",
+    orbColor3: "#0022ff",
+  };
+  const scene = evaluatePrismScene(customConfig, 0.5);
+  assert.equal(scene.palette.bgDark, "#010203");
+  assert.equal(scene.palette.orb2, "#ff0011");
+  assert.equal(scene.palette.orb3, "#00ff22");
+  assert.equal(scene.palette.orb4, "#0022ff");
+});
+

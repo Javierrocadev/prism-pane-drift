@@ -22,6 +22,40 @@ export const appSchema = defineToolcraft({
         title: "Controls",
         sections: [
           {
+            id: "background",
+            title: "Fondo & Colores",
+            controls: {
+              bgColor: {
+                type: "color",
+                target: "background.bgColor",
+                label: "Color Base de Fondo",
+                defaultValue: "#100624",
+                applicability: { mode: "always" },
+              },
+              orbColor1: {
+                type: "color",
+                target: "background.orbColor1",
+                label: "Luz Aurora Magenta/Rosa",
+                defaultValue: "#d91b7e",
+                applicability: { mode: "always" },
+              },
+              orbColor2: {
+                type: "color",
+                target: "background.orbColor2",
+                label: "Luz Aurora Ámbar/Naranja",
+                defaultValue: "#ff901a",
+                applicability: { mode: "always" },
+              },
+              orbColor3: {
+                type: "color",
+                target: "background.orbColor3",
+                label: "Luz Aurora Violeta/Cian",
+                defaultValue: "#6415ff",
+                applicability: { mode: "always" },
+              },
+            },
+          },
+          {
             id: "optics",
             title: "Óptica & Refracción",
             controls: {

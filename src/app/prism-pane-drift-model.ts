@@ -143,6 +143,10 @@ export interface PrismConfig {
   speed: number;
   paletteKey: string;
   grainIntensity: number;
+  bgColor?: string;
+  orbColor1?: string;
+  orbColor2?: string;
+  orbColor3?: string;
 }
 
 export const DEFAULT_PRISM_CONFIG: PrismConfig = {
@@ -160,6 +164,15 @@ export const DEFAULT_PRISM_CONFIG: PrismConfig = {
   grainIntensity: 18,
 };
 
+function parseColorValue(value: unknown): string | undefined {
+  if (typeof value === "string" && value.length > 0) return value;
+  if (typeof value === "object" && value !== null && "hex" in value) {
+    const hex = (value as { hex: unknown }).hex;
+    if (typeof hex === "string" && hex.length > 0) return hex;
+  }
+  return undefined;
+}
+
 export function extractPrismConfig(values: Record<string, unknown>): PrismConfig {
   return {
     paneCount: typeof values["geometry.paneCount"] === "number" ? values["geometry.paneCount"] : DEFAULT_PRISM_CONFIG.paneCount,
@@ -174,6 +187,10 @@ export function extractPrismConfig(values: Record<string, unknown>): PrismConfig
     grainIntensity: typeof values["atmosphere.grainIntensity"] === "number" ? values["atmosphere.grainIntensity"] : DEFAULT_PRISM_CONFIG.grainIntensity,
     speed: typeof values["atmosphere.speed"] === "number" ? values["atmosphere.speed"] / 100 : DEFAULT_PRISM_CONFIG.speed,
     paletteKey: typeof values["optics.paletteKey"] === "string" ? values["optics.paletteKey"] : DEFAULT_PRISM_CONFIG.paletteKey,
+    bgColor: parseColorValue(values["background.bgColor"]),
+    orbColor1: parseColorValue(values["background.orbColor1"]),
+    orbColor2: parseColorValue(values["background.orbColor2"]),
+    orbColor3: parseColorValue(values["background.orbColor3"]),
   };
 }
 
@@ -228,7 +245,14 @@ export function evaluatePrismScene(
   viewHeight = 800,
 ): EvaluatedScene {
   const normT = ((t % 1) + 1) % 1;
-  const palette = PALETTES[config.paletteKey] ?? PALETTES["prism-classic"];
+  const basePalette = PALETTES[config.paletteKey] ?? PALETTES["prism-classic"];
+  const palette: PaletteTheme = {
+    ...basePalette,
+    bgDark: config.bgColor || basePalette.bgDark,
+    orb2: config.orbColor1 || basePalette.orb2,
+    orb3: config.orbColor2 || basePalette.orb3,
+    orb4: config.orbColor3 || basePalette.orb4,
+  };
 
   // 1. Dynamic Aurora Orbs (Smooth periodic Fourier harmonics)
   const orbs: AuroraOrbData[] = [

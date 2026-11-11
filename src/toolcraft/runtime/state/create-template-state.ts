@@ -177,7 +177,7 @@ export function createToolcraftState(
     ),
   );
   const panels: ToolcraftState["panels"] = {
-    controls: { collapsedSections: {}, offset: { x: 0, y: 0 } },
+    controls: { collapsedSections: {}, offset: { x: 0, y: 0 }, snapEdge: "right" },
     layers: { offset: { x: 0, y: 0 } },
     timeline: { offset: { x: 0, y: 0 } },
     toolbar: { offset: { x: 0, y: 0 } },
