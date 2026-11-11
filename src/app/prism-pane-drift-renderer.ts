@@ -62,6 +62,23 @@ function drawRoundedRect(
   ctx.closePath();
 }
 
+function drawIlluminatedLeadingEdge(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  fadeDownRight = 0.5,
+): void {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height * fadeDownRight);
+}
+
 export function renderPrismScene(
   ctx: CanvasRenderingContext2D,
   scene: EvaluatedScene,
@@ -187,108 +204,97 @@ export function renderPrismScene(
     ctx.fillStyle = sheenGrad;
     ctx.fillRect(-halfW, -halfH, pane.width, pane.height);
 
-    // Inner rim Fresnel reflection (mimics light trapped inside polished glass edge)
-    const innerRimGrad = ctx.createLinearGradient(-halfW, -halfH, -halfW + 30, -halfH + 30);
-    innerRimGrad.addColorStop(0, "rgba(255, 255, 255, 0.5)");
-    innerRimGrad.addColorStop(0.5, "rgba(255, 200, 250, 0.15)");
-    innerRimGrad.addColorStop(1, "transparent");
-    ctx.strokeStyle = innerRimGrad;
-    ctx.lineWidth = 3;
-    drawRoundedRect(ctx, -halfW + 1.5, -halfH + 1.5, pane.width - 3, pane.height - 3, Math.max(0, cornerR - 1.5));
-    ctx.stroke();
+    // 4B. Inside pane: Internal Edge Refraction Bleed (Light diffusing through glass medium)
+    const innerLightBleed = ctx.createLinearGradient(
+      -halfW,
+      -halfH,
+      -halfW + 45 * pane.depth,
+      -halfH + 45 * pane.depth,
+    );
+    innerLightBleed.addColorStop(0, `rgba(255, 255, 255, ${0.4 * glowFactor})`);
+    innerLightBleed.addColorStop(0.35, scene.palette.orb2 + "28");
+    innerLightBleed.addColorStop(0.7, scene.palette.orb3 + "14");
+    innerLightBleed.addColorStop(1, "transparent");
+    ctx.fillStyle = innerLightBleed;
+    ctx.fillRect(-halfW, -halfH, pane.width, pane.height);
 
     ctx.restore(); // Exit clip
 
-    // 4C. Chromatic Aberration Rim (Faint RGB spectral split around borders)
-    if (config.chromaticAberration > 1) {
-      const ca = (config.chromaticAberration / 20) * 2.5;
-      ctx.save();
-      ctx.lineWidth = 1.2;
-      ctx.globalCompositeOperation = "screen";
+    // 4C. Grounded Subtle Glass Perimeter Rim (Directional bevel line)
+    // Avoids artificial wireframe boxes: illuminated at top-left, fades away on bottom-right
+    const rimGrad = ctx.createLinearGradient(-halfW, -halfH, halfW, halfH);
+    rimGrad.addColorStop(0, `rgba(255, 255, 255, ${Math.min(0.75, 0.35 + 0.35 * glowFactor)})`);
+    rimGrad.addColorStop(0.3, scene.palette.streakColor || "rgba(255, 180, 240, 0.4)");
+    rimGrad.addColorStop(0.7, "rgba(255, 255, 255, 0.12)");
+    rimGrad.addColorStop(1, "rgba(255, 255, 255, 0.04)");
 
-      // Cyan fringe shifted
-      ctx.strokeStyle = "rgba(0, 240, 255, 0.45)";
-      drawRoundedRect(ctx, -halfW - ca, -halfH - ca, pane.width, pane.height, cornerR);
-      ctx.stroke();
+    ctx.strokeStyle = rimGrad;
+    ctx.lineWidth = 1.0;
+    drawRoundedRect(ctx, -halfW, -halfH, pane.width, pane.height, cornerR);
+    ctx.stroke();
 
-      // Magenta fringe shifted
-      ctx.strokeStyle = "rgba(255, 0, 150, 0.45)";
-      drawRoundedRect(ctx, -halfW + ca, -halfH + ca, pane.width, pane.height, cornerR);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // 4D. MULTI-PASS PHOTOREALISTIC NEON EDGE GLOW (Additive Screen Bloom)
-    // Eliminates the flat vector "drawing" stroke with real laser/specular light dispersion
+    // 4D. ORGANIC DIRECTIONAL SPECULAR EDGE GLOW (Top & Right Facing Edges Only)
+    // Solves "superpuesto" by lighting ONLY the edges that face the incoming light beam
     if (glowFactor > 0.05) {
       ctx.save();
       ctx.globalCompositeOperation = "screen";
 
-      // Layer 1: Wide Atmospheric Bloom (soft diffuse neon halo in surrounding air)
+      // Pass 1: Soft Atmospheric Bloom along the illuminated leading edge
       ctx.save();
       ctx.shadowColor = scene.palette.orb2;
-      ctx.shadowBlur = Math.round(28 * glowFactor * pane.depth);
+      ctx.shadowBlur = Math.round(20 * glowFactor * pane.depth);
       ctx.strokeStyle = scene.palette.orb2;
-      ctx.globalAlpha = 0.5 * glowFactor;
-      ctx.lineWidth = Math.max(2, pane.bevelWidth * 1.8);
-      drawRoundedRect(ctx, -halfW, -halfH, pane.width, pane.height, cornerR);
+      ctx.globalAlpha = 0.55 * glowFactor;
+      ctx.lineWidth = Math.max(2, pane.bevelWidth * 1.6);
+      drawIlluminatedLeadingEdge(ctx, -halfW, -halfH, pane.width, pane.height, cornerR, 0.45);
       ctx.stroke();
       ctx.restore();
 
-      // Layer 2: Focused Saturated Core Glow
+      // Pass 2: Focused Luminous Glass Facet Line
       ctx.save();
-      ctx.shadowColor = scene.palette.orb3 || scene.palette.glintColor;
-      ctx.shadowBlur = Math.round(12 * glowFactor * pane.depth);
-      ctx.strokeStyle = scene.palette.streakColor || "rgba(255, 180, 240, 0.9)";
-      ctx.globalAlpha = 0.75 * glowFactor;
-      ctx.lineWidth = Math.max(1.5, pane.bevelWidth * 1.2);
-      drawRoundedRect(ctx, -halfW, -halfH, pane.width, pane.height, cornerR);
-      ctx.stroke();
-      ctx.restore();
-
-      // Layer 3: Incandescent Razor-Sharp White Hot Core
-      // The hallmark of real backlit neon glass: pure white center that cuts through the bloom
-      ctx.save();
-      ctx.shadowColor = "#ffffff";
-      ctx.shadowBlur = Math.round(4 * glowFactor);
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
-      ctx.globalAlpha = Math.min(1, 0.6 + glowFactor * 0.4);
-      ctx.lineWidth = 1.0;
-      drawRoundedRect(ctx, -halfW, -halfH, pane.width, pane.height, cornerR);
+      ctx.shadowColor = scene.palette.glintColor;
+      ctx.shadowBlur = Math.round(7 * glowFactor * pane.depth);
+      ctx.strokeStyle = "rgba(255, 250, 255, 0.92)";
+      ctx.globalAlpha = Math.min(1, 0.65 + glowFactor * 0.35);
+      ctx.lineWidth = 1.2;
+      drawIlluminatedLeadingEdge(ctx, -halfW, -halfH, pane.width, pane.height, cornerR, 0.45);
       ctx.stroke();
       ctx.restore();
 
       ctx.restore();
     }
 
-    // 4E. Intense Specular Glints & Anamorphic Optical Flares
+    // 4E. Directional Specular Glint & Smooth Lens Flare along Illuminated Edge
     if (pane.glintIntensity > 0.05) {
       ctx.save();
       ctx.globalCompositeOperation = "screen";
 
-      const perimeterT = pane.glintProgress;
-      let gx = -halfW;
+      // Travel naturally along the illuminated top edge and corner
+      const pT = pane.glintProgress;
+      let gx = -halfW + cornerR;
       let gy = -halfH;
       let isHorizontal = true;
 
-      if (perimeterT < 0.5) {
-        // Traveling across top edge
-        gx = -halfW + perimeterT * 2 * pane.width;
+      if (pT < 0.7) {
+        // Glint sliding across top illuminated edge
+        gx = -halfW + cornerR + (pT / 0.7) * (pane.width - 2 * cornerR);
         gy = -halfH;
         isHorizontal = true;
       } else {
-        // Traveling down right edge
+        // Glint rounding the top-right corner and sliding down right facet
+        const normCorner = (pT - 0.7) / 0.3;
         gx = halfW;
-        gy = -halfH + (perimeterT - 0.5) * 2 * pane.height;
+        gy = -halfH + cornerR + normCorner * (pane.height * 0.4);
         isHorizontal = false;
       }
 
-      const flareRadius = 45 * pane.depth * glowFactor;
+      // Soft circular specular burst
+      const flareRadius = 38 * pane.depth * glowFactor;
       const flareGrad = ctx.createRadialGradient(gx, gy, 0, gx, gy, flareRadius);
       flareGrad.addColorStop(0, "#ffffff");
-      flareGrad.addColorStop(0.12, "rgba(255, 250, 255, 0.98)");
-      flareGrad.addColorStop(0.35, scene.palette.glintColor + "99");
-      flareGrad.addColorStop(0.7, scene.palette.orb2 + "44");
+      flareGrad.addColorStop(0.15, "rgba(255, 250, 255, 0.95)");
+      flareGrad.addColorStop(0.4, scene.palette.glintColor + "88");
+      flareGrad.addColorStop(0.75, scene.palette.orb2 + "33");
       flareGrad.addColorStop(1, "transparent");
 
       ctx.fillStyle = flareGrad;
@@ -296,16 +302,16 @@ export function renderPrismScene(
       ctx.arc(gx, gy, flareRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Anamorphic horizontal optical beam along the glass edge
-      const streakLen = 70 * pane.depth * glowFactor;
+      // Anamorphic specular highlight streak along the glass edge
+      const streakLen = 60 * pane.depth * glowFactor;
       const streakGrad = isHorizontal
         ? ctx.createLinearGradient(gx - streakLen, gy, gx + streakLen, gy)
         : ctx.createLinearGradient(gx, gy - streakLen, gx, gy + streakLen);
 
       streakGrad.addColorStop(0, "transparent");
-      streakGrad.addColorStop(0.3, scene.palette.glintColor + "66");
+      streakGrad.addColorStop(0.35, scene.palette.glintColor + "66");
       streakGrad.addColorStop(0.5, "#ffffff");
-      streakGrad.addColorStop(0.7, scene.palette.glintColor + "66");
+      streakGrad.addColorStop(0.65, scene.palette.glintColor + "66");
       streakGrad.addColorStop(1, "transparent");
 
       ctx.strokeStyle = streakGrad;
@@ -318,17 +324,6 @@ export function renderPrismScene(
         ctx.moveTo(gx, gy - streakLen);
         ctx.lineTo(gx, gy + streakLen);
       }
-      ctx.stroke();
-
-      // Sharp diagonal diamond spike
-      const diagLen = flareRadius * 0.9;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-      ctx.lineWidth = 1.0;
-      ctx.beginPath();
-      ctx.moveTo(gx - diagLen * 0.7, gy - diagLen * 0.7);
-      ctx.lineTo(gx + diagLen * 0.7, gy + diagLen * 0.7);
-      ctx.moveTo(gx - diagLen * 0.7, gy + diagLen * 0.7);
-      ctx.lineTo(gx + diagLen * 0.7, gy - diagLen * 0.7);
       ctx.stroke();
 
       ctx.restore();

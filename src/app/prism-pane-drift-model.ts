@@ -244,7 +244,8 @@ export function evaluatePrismScene(
   viewWidth = 1200,
   viewHeight = 800,
 ): EvaluatedScene {
-  const normT = ((t % 1) + 1) % 1;
+  const speed = Math.max(0.01, config.speed ?? 1.0);
+  const normT = (((t * speed) % 1) + 1) % 1;
   const basePalette = PALETTES[config.paletteKey] ?? PALETTES["prism-classic"];
   const palette: PaletteTheme = {
     ...basePalette,
