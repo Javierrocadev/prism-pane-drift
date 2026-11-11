@@ -18,6 +18,61 @@ export interface PaletteTheme {
 }
 
 export const PALETTES: Record<string, PaletteTheme> = {
+  "aurora-prism": {
+    id: "aurora-prism",
+    name: "Aurora Prism",
+    bgDark: "#100624",
+    orb1: "#2a0845",
+    orb2: "#d91b7e",
+    orb3: "#ff901a",
+    orb4: "#6415ff",
+    glintColor: "#ffffff",
+    streakColor: "rgba(255, 140, 220, 0.6)",
+  },
+  "neon-quartz": {
+    id: "neon-quartz",
+    name: "Neon Quartz",
+    bgDark: "#050814",
+    orb1: "#0b194f",
+    orb2: "#00f0ff",
+    orb3: "#ff007f",
+    orb4: "#7928ca",
+    glintColor: "#e0ffff",
+    streakColor: "rgba(0, 240, 255, 0.7)",
+  },
+  "sunset-glass": {
+    id: "sunset-glass",
+    name: "Sunset Glass",
+    bgDark: "#1f0c05",
+    orb1: "#571604",
+    orb2: "#ff4500",
+    orb3: "#ffbb00",
+    orb4: "#ff0055",
+    glintColor: "#fff4d0",
+    streakColor: "rgba(255, 200, 100, 0.6)",
+  },
+  "cyber-hologram": {
+    id: "cyber-hologram",
+    name: "Cyber Hologram",
+    bgDark: "#031412",
+    orb1: "#06302b",
+    orb2: "#00d2a0",
+    orb3: "#00e5ff",
+    orb4: "#4facfe",
+    glintColor: "#e6ffff",
+    streakColor: "rgba(0, 229, 255, 0.6)",
+  },
+  "electric-violet": {
+    id: "electric-violet",
+    name: "Electric Violet",
+    bgDark: "#120524",
+    orb1: "#3c096c",
+    orb2: "#7b2cbf",
+    orb3: "#c77dff",
+    orb4: "#e0aaff",
+    glintColor: "#ffffff",
+    streakColor: "rgba(224, 170, 255, 0.6)",
+  },
   "prism-classic": {
     id: "prism-classic",
     name: "Prism Classic (Reference)",
@@ -104,6 +159,23 @@ export const DEFAULT_PRISM_CONFIG: PrismConfig = {
   paletteKey: "prism-classic",
   grainIntensity: 18,
 };
+
+export function extractPrismConfig(values: Record<string, unknown>): PrismConfig {
+  return {
+    paneCount: typeof values["geometry.paneCount"] === "number" ? values["geometry.paneCount"] : DEFAULT_PRISM_CONFIG.paneCount,
+    angleDeg: typeof values["geometry.angleDeg"] === "number" ? values["geometry.angleDeg"] : DEFAULT_PRISM_CONFIG.angleDeg,
+    paneScale: typeof values["geometry.paneScale"] === "number" ? values["geometry.paneScale"] / 100 : DEFAULT_PRISM_CONFIG.paneScale,
+    cornerRadius: typeof values["geometry.cornerRadius"] === "number" ? values["geometry.cornerRadius"] : DEFAULT_PRISM_CONFIG.cornerRadius,
+    refractionStrength: typeof values["optics.refractionStrength"] === "number" ? values["optics.refractionStrength"] : DEFAULT_PRISM_CONFIG.refractionStrength,
+    chromaticAberration: typeof values["optics.chromaticAberration"] === "number" ? values["optics.chromaticAberration"] : DEFAULT_PRISM_CONFIG.chromaticAberration,
+    glassOpacity: typeof values["optics.glassOpacity"] === "number" ? values["optics.glassOpacity"] / 100 : DEFAULT_PRISM_CONFIG.glassOpacity,
+    edgeGlow: typeof values["atmosphere.edgeGlow"] === "number" ? values["atmosphere.edgeGlow"] : DEFAULT_PRISM_CONFIG.edgeGlow,
+    streakDensity: typeof values["atmosphere.streakDensity"] === "number" ? values["atmosphere.streakDensity"] : DEFAULT_PRISM_CONFIG.streakDensity,
+    grainIntensity: typeof values["atmosphere.grainIntensity"] === "number" ? values["atmosphere.grainIntensity"] : DEFAULT_PRISM_CONFIG.grainIntensity,
+    speed: typeof values["atmosphere.speed"] === "number" ? values["atmosphere.speed"] / 100 : DEFAULT_PRISM_CONFIG.speed,
+    paletteKey: typeof values["optics.paletteKey"] === "string" ? values["optics.paletteKey"] : DEFAULT_PRISM_CONFIG.paletteKey,
+  };
+}
 
 export interface GlassPaneData {
   id: number;
