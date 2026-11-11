@@ -69,14 +69,13 @@ function drawIlluminatedLeadingEdge(
   width: number,
   height: number,
   radius: number,
-  fadeDownRight = 0.5,
 ): void {
   const r = Math.min(radius, width / 2, height / 2);
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.lineTo(x + width - r, y);
   ctx.quadraticCurveTo(x + width, y, x + width, y + r);
-  ctx.lineTo(x + width, y + height * fadeDownRight);
+  ctx.lineTo(x + width, y + height - r);
 }
 
 export function renderPrismScene(
@@ -112,35 +111,44 @@ export function renderPrismScene(
   }
   ctx.restore();
 
-  // 3. Diagonal Light Streaks (fine parallel laser beams across the composition)
+  // 3. Diagonal Light Streaks (subtle, soft parallel laser beams across the composition)
   if (scene.streaks.length > 0) {
     ctx.save();
     ctx.globalCompositeOperation = "screen";
 
     const diagAngle = (config.angleDeg * Math.PI) / 180;
     const perpAngle = diagAngle + Math.PI / 2;
+    const cosDiag = Math.cos(diagAngle);
+    const sinDiag = Math.sin(diagAngle);
+    const cosPerp = Math.cos(perpAngle);
+    const sinPerp = Math.sin(perpAngle);
     const maxDim = Math.hypot(width, height) * 1.5;
+    const halfWidth = width / 2;
+    const halfHeight = height / 2;
 
     for (const streak of scene.streaks) {
       const offsetDist = (streak.offsetNorm - 0.5) * maxDim;
-      const originX = width / 2 + Math.cos(perpAngle) * offsetDist;
-      const originY = height / 2 + Math.sin(perpAngle) * offsetDist;
+      const originX = halfWidth + cosPerp * offsetDist;
+      const originY = halfHeight + sinPerp * offsetDist;
 
-      const p1x = originX - Math.cos(diagAngle) * maxDim;
-      const p1y = originY - Math.sin(diagAngle) * maxDim;
-      const p2x = originX + Math.cos(diagAngle) * maxDim;
-      const p2y = originY + Math.sin(diagAngle) * maxDim;
+      const p1x = originX - cosDiag * maxDim;
+      const p1y = originY - sinDiag * maxDim;
+      const p2x = originX + cosDiag * maxDim;
+      const p2y = originY + sinDiag * maxDim;
 
       const lineGrad = ctx.createLinearGradient(p1x, p1y, p2x, p2y);
       lineGrad.addColorStop(0, "transparent");
-      lineGrad.addColorStop(0.3, scene.palette.streakColor);
-      lineGrad.addColorStop(0.5, "#ffffff");
-      lineGrad.addColorStop(0.7, scene.palette.streakColor);
+      lineGrad.addColorStop(0.25, "transparent");
+      lineGrad.addColorStop(0.42, scene.palette.streakColor);
+      lineGrad.addColorStop(0.5, "rgba(255, 255, 255, 0.45)");
+      lineGrad.addColorStop(0.58, scene.palette.streakColor);
+      lineGrad.addColorStop(0.75, "transparent");
       lineGrad.addColorStop(1, "transparent");
 
       ctx.strokeStyle = lineGrad;
       ctx.lineWidth = streak.thickness;
-      ctx.globalAlpha = Math.min(1, Math.max(0, streak.intensity));
+      ctx.lineCap = "round";
+      ctx.globalAlpha = Math.min(0.55, Math.max(0, streak.intensity * 0.6));
 
       ctx.beginPath();
       ctx.moveTo(p1x, p1y);
@@ -233,31 +241,40 @@ export function renderPrismScene(
     drawRoundedRect(ctx, -halfW, -halfH, pane.width, pane.height, cornerR);
     ctx.stroke();
 
-    // 4D. ORGANIC DIRECTIONAL SPECULAR EDGE GLOW (Top & Right Facing Edges Only)
-    // Solves "superpuesto" by lighting ONLY the edges that face the incoming light beam
+    // 4D. Tapered reflected light, continuous through the top-right corner.
     if (glowFactor > 0.05) {
       ctx.save();
       ctx.globalCompositeOperation = "screen";
+
+      const edgeLight = ctx.createLinearGradient(-halfW, -halfH, halfW, halfH);
+      const cornerStop = pane.width ** 2 / (pane.width ** 2 + pane.height ** 2);
+      edgeLight.addColorStop(0, "transparent");
+      edgeLight.addColorStop(cornerStop * 0.4, scene.palette.orb2 + "18");
+      edgeLight.addColorStop(cornerStop, scene.palette.glintColor + "88");
+      edgeLight.addColorStop(cornerStop + (1 - cornerStop) * 0.55, scene.palette.orb2 + "18");
+      edgeLight.addColorStop(1, "transparent");
 
       // Pass 1: Soft Atmospheric Bloom along the illuminated leading edge
       ctx.save();
       ctx.shadowColor = scene.palette.orb2;
       ctx.shadowBlur = Math.round(20 * glowFactor * pane.depth);
-      ctx.strokeStyle = scene.palette.orb2;
-      ctx.globalAlpha = 0.55 * glowFactor;
-      ctx.lineWidth = Math.max(2, pane.bevelWidth * 1.6);
-      drawIlluminatedLeadingEdge(ctx, -halfW, -halfH, pane.width, pane.height, cornerR, 0.45);
+      ctx.strokeStyle = edgeLight;
+      ctx.globalAlpha = 0.24 * glowFactor;
+      ctx.lineWidth = Math.max(2, pane.bevelWidth * 1.25);
+      ctx.lineCap = "round";
+      drawIlluminatedLeadingEdge(ctx, -halfW, -halfH, pane.width, pane.height, cornerR);
       ctx.stroke();
       ctx.restore();
 
-      // Pass 2: Focused Luminous Glass Facet Line
+      // Pass 2: A thin translucent reflection rather than an opaque white outline.
       ctx.save();
       ctx.shadowColor = scene.palette.glintColor;
-      ctx.shadowBlur = Math.round(7 * glowFactor * pane.depth);
-      ctx.strokeStyle = "rgba(255, 250, 255, 0.92)";
-      ctx.globalAlpha = Math.min(1, 0.65 + glowFactor * 0.35);
-      ctx.lineWidth = 1.2;
-      drawIlluminatedLeadingEdge(ctx, -halfW, -halfH, pane.width, pane.height, cornerR, 0.45);
+      ctx.shadowBlur = Math.round(10 * glowFactor * pane.depth);
+      ctx.strokeStyle = edgeLight;
+      ctx.globalAlpha = 0.28 * glowFactor;
+      ctx.lineWidth = 0.65;
+      ctx.lineCap = "round";
+      drawIlluminatedLeadingEdge(ctx, -halfW, -halfH, pane.width, pane.height, cornerR);
       ctx.stroke();
       ctx.restore();
 
@@ -268,6 +285,7 @@ export function renderPrismScene(
     if (pane.glintIntensity > 0.05) {
       ctx.save();
       ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha = pane.glintIntensity * 0.4;
 
       // Travel naturally along the illuminated top edge and corner
       const pT = pane.glintProgress;
@@ -289,10 +307,10 @@ export function renderPrismScene(
       }
 
       // Soft circular specular burst
-      const flareRadius = 38 * pane.depth * glowFactor;
+      const flareRadius = 28 * pane.depth * glowFactor;
       const flareGrad = ctx.createRadialGradient(gx, gy, 0, gx, gy, flareRadius);
-      flareGrad.addColorStop(0, "#ffffff");
-      flareGrad.addColorStop(0.15, "rgba(255, 250, 255, 0.95)");
+      flareGrad.addColorStop(0, "rgba(255, 250, 255, 0.55)");
+      flareGrad.addColorStop(0.15, "rgba(255, 250, 255, 0.35)");
       flareGrad.addColorStop(0.4, scene.palette.glintColor + "88");
       flareGrad.addColorStop(0.75, scene.palette.orb2 + "33");
       flareGrad.addColorStop(1, "transparent");
@@ -303,7 +321,7 @@ export function renderPrismScene(
       ctx.fill();
 
       // Anamorphic specular highlight streak along the glass edge
-      const streakLen = 60 * pane.depth * glowFactor;
+      const streakLen = 40 * pane.depth * glowFactor;
       const streakGrad = isHorizontal
         ? ctx.createLinearGradient(gx - streakLen, gy, gx + streakLen, gy)
         : ctx.createLinearGradient(gx, gy - streakLen, gx, gy + streakLen);
@@ -315,7 +333,7 @@ export function renderPrismScene(
       streakGrad.addColorStop(1, "transparent");
 
       ctx.strokeStyle = streakGrad;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 0.8;
       ctx.beginPath();
       if (isHorizontal) {
         ctx.moveTo(gx - streakLen, gy);

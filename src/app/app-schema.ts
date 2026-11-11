@@ -221,7 +221,7 @@ export const appSchema = defineToolcraft({
                 max: 200,
                 step: 5,
                 unit: "%",
-                defaultValue: 50,
+                defaultValue: 100,
                 sliderValueKind: "continuous",
                 variant: "continuous",
                 applicability: { mode: "always" },

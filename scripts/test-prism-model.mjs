@@ -63,15 +63,16 @@ test("Prism Pane Drift: custom background colors override palette", () => {
   assert.equal(scene.palette.orb4, "#0022ff");
 });
 
-test("Prism Pane Drift: speed scaling directly adjusts drift rate down to 5%", () => {
+test("Prism Pane Drift: speed scaling supports ultra-slow controls down to 5% with loop continuity", () => {
   const slowConfig = { ...DEFAULT_PRISM_CONFIG, speed: 0.05 };
   const fastConfig = { ...DEFAULT_PRISM_CONFIG, speed: 1.0 };
 
-  const slowScene = evaluatePrismScene(slowConfig, 0.5);
-  const fastScene = evaluatePrismScene(fastConfig, 0.5);
+  assert.equal(slowConfig.speed, 0.05);
+  assert.equal(fastConfig.speed, 1.0);
 
-  // At 5% speed, the normalized loop time should be 0.5 * 0.05 = 0.025 instead of 0.5
-  assert.ok(Math.abs(slowScene.timeNormalized - 0.025) < 0.0001);
-  assert.ok(Math.abs(fastScene.timeNormalized - 0.5) < 0.0001);
+  const slowStart = evaluatePrismScene(slowConfig, 0.0);
+  const slowEnd = evaluatePrismScene(slowConfig, 1.0);
+  assert.ok(Math.abs(slowStart.orbs[0].xNorm - slowEnd.orbs[0].xNorm) < 0.0001);
+  assert.ok(Math.abs(slowStart.panes[0].centerX - slowEnd.panes[0].centerX) < 0.001);
 });
 

@@ -2,10 +2,51 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PRISM_CONFIG,
   evaluatePrismScene,
+  extractPrismConfig,
   PALETTES,
 } from "./prism-pane-drift-model";
 
 describe("Prism Pane Drift Mathematical Model", () => {
+  it("uses one complete timeline cycle even with a previously saved speed", () => {
+    const config = extractPrismConfig({ "atmosphere.speed": 50 });
+    expect(config.speed).toBe(0.5);
+    expect(evaluatePrismScene(config, 0)).toEqual(evaluatePrismScene(config, 1));
+    expect(evaluatePrismScene(config, 0.25).timeNormalized).toBe(0.25);
+  });
+
+  it("approaches the starting scene continuously before the timeline wraps", () => {
+    const start = evaluatePrismScene(DEFAULT_PRISM_CONFIG, 0);
+    const end = evaluatePrismScene(DEFAULT_PRISM_CONFIG, 1 - 1e-7);
+    const circularDistance = (a: number, b: number) =>
+      Math.min(Math.abs(a - b), 1 - Math.abs(a - b));
+
+    start.orbs.forEach((orb, i) => {
+      expect(end.orbs[i].xNorm).toBeCloseTo(orb.xNorm, 5);
+      expect(end.orbs[i].yNorm).toBeCloseTo(orb.yNorm, 5);
+    });
+    start.panes.forEach((pane, i) => {
+      expect(end.panes[i].centerX).toBeCloseTo(pane.centerX, 3);
+      expect(end.panes[i].centerY).toBeCloseTo(pane.centerY, 3);
+      expect(circularDistance(end.panes[i].glintProgress, pane.glintProgress)).toBeLessThan(1e-5);
+      expect(end.panes[i].glintIntensity).toBeCloseTo(pane.glintIntensity, 5);
+    });
+    start.streaks.forEach((streak, i) => {
+      expect(circularDistance(end.streaks[i].offsetNorm, streak.offsetNorm)).toBeLessThan(1e-5);
+      expect(end.streaks[i].intensity).toBeCloseTo(streak.intensity, 5);
+    });
+  });
+
+  it("fades glints out where their open edge path wraps", () => {
+    for (let frame = 0; frame < 1000; frame++) {
+      const scene = evaluatePrismScene(DEFAULT_PRISM_CONFIG, frame / 1000);
+      for (const pane of scene.panes) {
+        if (pane.glintProgress < 0.001 || pane.glintProgress > 0.999) {
+          expect(pane.glintIntensity).toBeLessThan(0.001);
+        }
+      }
+    }
+  });
+
   it("guarantees seamless loop continuity between t=0 and t=1", () => {
     const sceneStart = evaluatePrismScene(DEFAULT_PRISM_CONFIG, 0.0);
     const sceneEnd = evaluatePrismScene(DEFAULT_PRISM_CONFIG, 1.0);

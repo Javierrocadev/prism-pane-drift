@@ -244,8 +244,8 @@ export function evaluatePrismScene(
   viewWidth = 1200,
   viewHeight = 800,
 ): EvaluatedScene {
-  const speed = Math.max(0.01, config.speed ?? 1.0);
-  const normT = (((t * speed) % 1) + 1) % 1;
+  // Timeline duration is the sole clock: every duration contains one full cycle.
+  const normT = ((t % 1) + 1) % 1;
   const basePalette = PALETTES[config.paletteKey] ?? PALETTES["prism-classic"];
   const palette: PaletteTheme = {
     ...basePalette,
@@ -287,18 +287,19 @@ export function evaluatePrismScene(
     },
   ];
 
-  // 2. Light Streaks (fine 45-degree ray lines)
+  // 2. Light Streaks (fine 45-degree ray lines - softer and subtle)
   const streaks: LightStreakData[] = [];
   const streakCount = Math.max(2, Math.min(24, Math.round(config.streakDensity)));
   for (let i = 0; i < streakCount; i++) {
     const baseOffset = i / streakCount;
-    const speedMult = 1 + (i % 3) * 0.5;
-    const offsetNorm = (baseOffset + normT * 0.2 * speedMult) % 1;
+    // Whole-number traversals close the loop; wrapping happens offscreen.
+    const speedMult = 1 + (i % 3);
+    const offsetNorm = (baseOffset + normT * speedMult) % 1;
     const pulse = 0.5 + 0.5 * Math.sin(TAU * (normT * 2 + i * 0.7));
     streaks.push({
       offsetNorm,
-      thickness: 1 + (i % 2) * 1.5,
-      intensity: (0.35 + 0.65 * pulse) * (config.edgeGlow / 100),
+      thickness: 0.8 + (i % 2) * 0.6,
+      intensity: (0.2 + 0.45 * pulse) * (config.edgeGlow / 100),
       speedMultiplier: speedMult,
     });
   }
@@ -346,9 +347,10 @@ export function evaluatePrismScene(
     const height = tmpl.h * config.paneScale;
 
     // Specular glint travel along the top/right perimeter
-    const glintProgress = (loopPhase * 1.5) % 1;
+    const glintProgress = loopPhase % 1;
+    // The edge is an open path, so hide the glint as it returns to its start.
     const glintIntensity =
-      Math.pow(0.5 + 0.5 * Math.sin(TAU * loopPhase * 2), 3) *
+      Math.pow(Math.sin(Math.PI * glintProgress), 2) *
       (config.edgeGlow / 100);
 
     // Refraction offset vector

@@ -6,6 +6,7 @@ import {
 import { renderPrismScene } from "./prism-pane-drift-renderer";
 import { getToolcraftTimelineLoopProgress } from "@/toolcraft/runtime";
 import {
+  useToolcraftDispatch,
   useToolcraftEvaluatedValues,
   useToolcraftSelector,
 } from "@/toolcraft/runtime/react";
@@ -13,6 +14,7 @@ import {
 export function PrismPaneDriftCanvas(): React.JSX.Element {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const dispatch = useToolcraftDispatch();
 
   // Read native Toolcraft values and timeline state
   const values = useToolcraftEvaluatedValues();
@@ -22,23 +24,64 @@ export function PrismPaneDriftCanvas(): React.JSX.Element {
     return extractPrismConfig(values);
   }, [values]);
 
-  const loopProgress = getToolcraftTimelineLoopProgress(timeline);
+  // Synchronize speed control with timeline loop duration to preserve seamless cycle
+  const prevSpeedRef = React.useRef(config.speed);
+  React.useEffect(() => {
+    if (config.speed && config.speed !== prevSpeedRef.current) {
+      prevSpeedRef.current = config.speed;
+      const baseDuration = 16;
+      const targetDuration = Math.max(1, Math.round(baseDuration / config.speed));
+      dispatch({ durationSeconds: targetDuration, type: "timeline.setDuration" });
+    }
+  }, [config.speed, dispatch]);
 
-  // Render to Canvas on parameter changes, timeline ticks, or container resize
+  const loopProgress = getToolcraftTimelineLoopProgress(timeline);
+  const sizeRef = React.useRef({ width: 1000, height: 700, dpr: 1 });
+
+  // Manage canvas backing buffer dimensions only when container actually resizes
+  React.useEffect(() => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+
+    const updateSize = () => {
+      const width = container.clientWidth || 1000;
+      const height = container.clientHeight || 700;
+      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+
+      sizeRef.current = { width, height, dpr };
+
+      const pixelWidth = Math.floor(width * dpr);
+      const pixelHeight = Math.floor(height * dpr);
+
+      if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+        canvas.width = pixelWidth;
+        canvas.height = pixelHeight;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+      }
+    };
+
+    updateSize();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => {
+        updateSize();
+      });
+      observer.observe(container);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
+  // Fluid render to Canvas on parameter changes or timeline ticks without layout thrashing
   React.useEffect(() => {
     const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
+    if (!canvas) return;
 
-    const width = container.clientWidth || 1000;
-    const height = container.clientHeight || 700;
-    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-
-    canvas.width = Math.floor(width * dpr);
-    canvas.height = Math.floor(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
+    const { width, height, dpr } = sizeRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
