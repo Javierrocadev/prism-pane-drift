@@ -1,1 +1,96 @@
-null
+{
+  "version": 2,
+  "appId": "prism-pane-drift",
+  "state": {
+    "values": {
+      "canvas.workspaceBackground": "dots",
+      "canvas.aspectRatio": {
+        "height": 9,
+        "mode": "preset",
+        "value": "16:9",
+        "width": 16
+      },
+      "canvas.size.width": 1920,
+      "canvas.size.height": 1080,
+      "background.bgColor": "#000000",
+      "background.orbColor1": "#FFFFFC",
+      "background.orbColor2": "#FF7F11",
+      "background.orbColor3": "#FF7F11",
+      "optics.paletteKey": "monochrome",
+      "optics.refractionStrength": 30,
+      "optics.chromaticAberration": 1,
+      "optics.glassOpacity": 24,
+      "optics.glassColor": "#BEB7A4",
+      "geometry.paneCount": 5,
+      "geometry.angleDeg": 59,
+      "geometry.paneScale": 145,
+      "geometry.cornerRadius": 18,
+      "atmosphere.edgeGlow": 56,
+      "atmosphere.streakDensity": 6,
+      "atmosphere.grainIntensity": 38,
+      "atmosphere.speed": 200,
+      "export.image.format": "png",
+      "export.image.resolution": "4k",
+      "export.video.format": "mp4",
+      "export.video.resolution": "current"
+    },
+    "canvas": {
+      "offset": {
+        "x": -169.92729603160524,
+        "y": -18.581748268821002
+      },
+      "size": {
+        "height": 1080,
+        "unit": "px",
+        "width": 1920
+      },
+      "zoom": 105,
+      "mode": "finite"
+    },
+    "panels": {
+      "controls": {
+        "collapsedSections": {},
+        "offset": {
+          "x": 0.000030493327358271927,
+          "y": -1.8945911506307311e-10
+        },
+        "snapEdge": "right",
+        "collapsed": false,
+        "scrollTop": 0
+      },
+      "layers": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "timeline": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        },
+        "extended": true
+      },
+      "toolbar": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    "timeline": {
+      "currentTimeSeconds": 4.7468999999761365,
+      "durationSeconds": 8,
+      "expanded": false,
+      "isLooping": true,
+      "isPlaying": true,
+      "selectedKeyframeId": null,
+      "keyframeGroups": []
+    },
+    "layers": [],
+    "selectedLayerId": null,
+    "mediaAssets": []
+  },
+  "resources": [],
+  "theme": "light"
+}
