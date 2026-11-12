@@ -179,7 +179,12 @@ export function renderPrismScene(
 
   // 4. Glass Panes Layer with Multi-Pass Photorealistic Glowing Edges & Refraction
   const glowFactor = config.edgeGlow / 100;
-  const glassRgb = parseHexToRgb(config.glassColor ?? "#7828b4");
+  const isDefaultVioletGlass = !config.glassColor || config.glassColor === "#7828b4";
+  const effectiveGlassColor =
+    (config.paletteKey === "monochrome" || config.paletteKey === "monochrome-neutral") && isDefaultVioletGlass
+      ? "#a0a4b0"
+      : config.glassColor ?? "#7828b4";
+  const glassRgb = parseHexToRgb(effectiveGlassColor);
 
   for (const pane of scene.panes) {
     ctx.save();

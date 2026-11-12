@@ -95,6 +95,24 @@ describe("Prism Pane Drift Mathematical Model", () => {
     expect(PALETTES["solar-amber"]).toBeDefined();
     expect(PALETTES["emerald-ice"]).toBeDefined();
     expect(PALETTES["royal-velvet"]).toBeDefined();
+    expect(PALETTES["monochrome"]).toBeDefined();
+  });
+
+  it("evaluates monochrome palette without aurora default colors", () => {
+    // When extracted from UI values where aurora background defaults are still present
+    const config = extractPrismConfig({
+      "optics.paletteKey": "monochrome",
+      "background.bgColor": "#100624",
+      "background.orbColor1": "#d91b7e",
+      "background.orbColor2": "#ff901a",
+      "background.orbColor3": "#6415ff",
+    });
+    const scene = evaluatePrismScene(config, 0.5);
+    expect(scene.palette.id).toBe("monochrome");
+    expect(scene.palette.bgDark).toBe(PALETTES["monochrome"].bgDark);
+    expect(scene.palette.orb2).toBe(PALETTES["monochrome"].orb2);
+    expect(scene.palette.orb3).toBe(PALETTES["monochrome"].orb3);
+    expect(scene.palette.orb4).toBe(PALETTES["monochrome"].orb4);
   });
 
   it("extracts custom glassColor or falls back to default #7828b4", () => {

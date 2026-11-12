@@ -132,4 +132,38 @@ describe("Prism glass edge integration", () => {
     );
     expect(glassGradient).toBeDefined();
   });
+
+  it("applies neutral glass tint in monochrome palette when glassColor is default", () => {
+    const gradients: Gradient[] = [];
+    const stack: Record<string, unknown>[] = [];
+    const state: Record<string, unknown> = { globalAlpha: 1, lineWidth: 1 };
+    const gradient = (): Gradient => {
+      const g: Gradient = {
+        stops: [],
+        addColorStop: (position, color) => { g.stops.push([position, color]); },
+      };
+      gradients.push(g);
+      return g;
+    };
+    const context = new Proxy(state, {
+      get(target, key: string) {
+        if (key === "createLinearGradient" || key === "createRadialGradient") return gradient;
+        if (key === "save") return () => stack.push({ ...target });
+        if (key === "restore") return () => Object.assign(target, stack.pop());
+        return key in target ? target[key] : () => undefined;
+      },
+    }) as unknown as CanvasRenderingContext2D;
+
+    const config = { ...DEFAULT_PRISM_CONFIG, paneCount: 1, grainIntensity: 0, paletteKey: "monochrome" };
+    const scene = evaluatePrismScene(config, 0);
+    scene.orbs = [];
+    scene.streaks = [];
+    renderPrismScene(context, scene, config, 600, 600);
+
+    // Look for glass gradient containing neutral tint rgb(160, 164, 176) at stop 0.85
+    const glassGradient = gradients.find((g) =>
+      g.stops.some(([pos, col]) => pos === 0.85 && col.includes("160, 164, 176")),
+    );
+    expect(glassGradient).toBeDefined();
+  });
 });

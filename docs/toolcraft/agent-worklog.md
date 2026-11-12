@@ -6,9 +6,24 @@ Mode: product
 
 Prism Pane Drift is an existing animated glass composition. This change is a focused animation correction, not certification of the pre-existing product implementation.
 
-Active change: customizable-glass-color
+Active change: monochrome-neutral-palette
 
 ## Decision Trail
+
+### Monochrome neutral palette
+
+- Entry type: focused
+- Change ID: monochrome-neutral-palette
+- Request: User requested a color palette option without chromatic hue shifts ("añade una opcio de paleta cromatica que no tenga ningun cambio, sabes lo que te digo?") clarified as a neutral / monochromatic palette (grayscale, black/white, silver light, no chromatic hue variation).
+- Changed owner: `src/app/app-schema.ts`, `src/app/prism-pane-drift-model.ts`, `src/app/prism-pane-drift-renderer.ts`, `src/app/prism-pane-drift-model.test.ts`, `src/app/prism-pane-drift-renderer.test.ts`, `scripts/test-prism-model.mjs`.
+- Decision:
+  1. Added `"monochrome"` ("Monocromo Neutro") to `PALETTES` in `src/app/prism-pane-drift-model.ts` with deep graphite background (`#08080a`), charcoal ambient base (`#141418`), neutral silver orbs (`#404048`, `#c0c0c8`, `#707078`), pure white specular glint, and soft translucent laser streaks.
+  2. Exposed `{ label: "Monocromo Neutro", value: "monochrome" }` in `optics.paletteKey` dropdown in `src/app/app-schema.ts`.
+  3. Ensured that when switching from the default `aurora-prism` to non-aurora curated palettes (such as `monochrome`), the default aurora background colors (`#100624`, `#d91b7e`, `#ff901a`, `#6415ff`) do not override the chosen palette unless the user has explicitly customized them.
+  4. In `src/app/prism-pane-drift-renderer.ts`, automatically adopted a crisp neutral glass tint (`#a0a4b0`) when `monochrome` is selected if `glassColor` is at default violet `#7828b4`, delivering pure, clean grayscale crystal visuals without accidental purple tinting.
+- User-visible result: Users can select "Monocromo Neutro" from the "Paleta Cromática" dropdown, producing a sleek, high-contrast, black-and-white / silver aesthetic across the frosted glass composition with zero chromatic shifts.
+- Verification: Vitest unit tests passed (14 tests across `prism-pane-drift-model.test.ts` and `prism-pane-drift-renderer.test.ts`). `scripts/test-prism-model.mjs` passed (7 tests). `npm run files:check` and `git diff --check` passed. Playwright e2e loop tests passed.
+- Risks: Existing starter acceptance metadata remains outside this focused palette addition. No framework or bootstrap edits.
 
 ### Customizable glass color
 

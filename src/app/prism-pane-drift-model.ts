@@ -29,6 +29,28 @@ export const PALETTES: Record<string, PaletteTheme> = {
     glintColor: "#ffffff",
     streakColor: "rgba(255, 140, 220, 0.6)",
   },
+  "monochrome": {
+    id: "monochrome",
+    name: "Monocromo Neutro",
+    bgDark: "#08080a",
+    orb1: "#141418",
+    orb2: "#404048",
+    orb3: "#c0c0c8",
+    orb4: "#707078",
+    glintColor: "#ffffff",
+    streakColor: "rgba(240, 240, 255, 0.45)",
+  },
+  "monochrome-neutral": {
+    id: "monochrome-neutral",
+    name: "Monocromo Neutro",
+    bgDark: "#08080a",
+    orb1: "#141418",
+    orb2: "#404048",
+    orb3: "#c0c0c8",
+    orb4: "#707078",
+    glintColor: "#ffffff",
+    streakColor: "rgba(240, 240, 255, 0.45)",
+  },
   "neon-quartz": {
     id: "neon-quartz",
     name: "Neon Quartz",
@@ -250,12 +272,19 @@ export function evaluatePrismScene(
   // Timeline duration is the sole clock: every duration contains one full cycle.
   const normT = ((t % 1) + 1) % 1;
   const basePalette = PALETTES[config.paletteKey] ?? PALETTES["prism-classic"];
+
+  const isDefaultAuroraBg = config.bgColor === "#100624";
+  const isDefaultAuroraOrb1 = config.orbColor1 === "#d91b7e";
+  const isDefaultAuroraOrb2 = config.orbColor2 === "#ff901a";
+  const isDefaultAuroraOrb3 = config.orbColor3 === "#6415ff";
+  const isAurora = config.paletteKey === "aurora-prism" || config.paletteKey === "prism-classic";
+
   const palette: PaletteTheme = {
     ...basePalette,
-    bgDark: config.bgColor || basePalette.bgDark,
-    orb2: config.orbColor1 || basePalette.orb2,
-    orb3: config.orbColor2 || basePalette.orb3,
-    orb4: config.orbColor3 || basePalette.orb4,
+    bgDark: (config.bgColor && (!isAurora && isDefaultAuroraBg ? basePalette.bgDark : config.bgColor)) || basePalette.bgDark,
+    orb2: (config.orbColor1 && (!isAurora && isDefaultAuroraOrb1 ? basePalette.orb2 : config.orbColor1)) || basePalette.orb2,
+    orb3: (config.orbColor2 && (!isAurora && isDefaultAuroraOrb2 ? basePalette.orb3 : config.orbColor2)) || basePalette.orb3,
+    orb4: (config.orbColor3 && (!isAurora && isDefaultAuroraOrb3 ? basePalette.orb4 : config.orbColor3)) || basePalette.orb4,
   };
 
   // 1. Dynamic Aurora Orbs (Smooth periodic Fourier harmonics)

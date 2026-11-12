@@ -66,6 +66,7 @@ export const appSchema = defineToolcraft({
                 defaultValue: "aurora-prism",
                 options: [
                   { label: "Aurora Prism", value: "aurora-prism" },
+                  { label: "Monocromo Neutro", value: "monochrome" },
                   { label: "Neon Quartz", value: "neon-quartz" },
                   { label: "Sunset Glass", value: "sunset-glass" },
                   { label: "Electric Violet", value: "electric-violet" },

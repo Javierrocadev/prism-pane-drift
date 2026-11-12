@@ -46,6 +46,7 @@ test("Prism Pane Drift: all 5 reference palettes exist", () => {
   assert.ok(PALETTES["solar-amber"]);
   assert.ok(PALETTES["emerald-ice"]);
   assert.ok(PALETTES["royal-velvet"]);
+  assert.ok(PALETTES["monochrome"]);
 });
 
 test("Prism Pane Drift: custom background colors override palette", () => {
@@ -80,5 +81,14 @@ test("Prism Pane Drift: glassColor default is #7828b4 and supports custom overri
   assert.equal(DEFAULT_PRISM_CONFIG.glassColor, "#7828b4");
   const custom = { ...DEFAULT_PRISM_CONFIG, glassColor: "#00d2a0" };
   assert.equal(custom.glassColor, "#00d2a0");
+});
+
+test("Prism Pane Drift: monochrome palette produces neutral grayscale values", () => {
+  const scene = evaluatePrismScene({ ...DEFAULT_PRISM_CONFIG, paletteKey: "monochrome" }, 0.5);
+  assert.equal(scene.palette.id, "monochrome");
+  assert.equal(scene.palette.bgDark, "#08080a");
+  assert.equal(scene.palette.orb2, "#404048");
+  assert.equal(scene.palette.orb3, "#c0c0c8");
+  assert.equal(scene.palette.orb4, "#707078");
 });
 
