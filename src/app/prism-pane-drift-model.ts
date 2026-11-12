@@ -143,6 +143,7 @@ export interface PrismConfig {
   speed: number;
   paletteKey: string;
   grainIntensity: number;
+  glassColor?: string;
   bgColor?: string;
   orbColor1?: string;
   orbColor2?: string;
@@ -162,6 +163,7 @@ export const DEFAULT_PRISM_CONFIG: PrismConfig = {
   speed: 1.0,
   paletteKey: "prism-classic",
   grainIntensity: 18,
+  glassColor: "#7828b4",
 };
 
 function parseColorValue(value: unknown): string | undefined {
@@ -187,6 +189,7 @@ export function extractPrismConfig(values: Record<string, unknown>): PrismConfig
     grainIntensity: typeof values["atmosphere.grainIntensity"] === "number" ? values["atmosphere.grainIntensity"] : DEFAULT_PRISM_CONFIG.grainIntensity,
     speed: typeof values["atmosphere.speed"] === "number" ? values["atmosphere.speed"] / 100 : DEFAULT_PRISM_CONFIG.speed,
     paletteKey: typeof values["optics.paletteKey"] === "string" ? values["optics.paletteKey"] : DEFAULT_PRISM_CONFIG.paletteKey,
+    glassColor: parseColorValue(values["optics.glassColor"]) ?? DEFAULT_PRISM_CONFIG.glassColor,
     bgColor: parseColorValue(values["background.bgColor"]),
     orbColor1: parseColorValue(values["background.orbColor1"]),
     orbColor2: parseColorValue(values["background.orbColor2"]),

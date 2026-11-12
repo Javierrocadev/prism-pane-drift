@@ -96,4 +96,15 @@ describe("Prism Pane Drift Mathematical Model", () => {
     expect(PALETTES["emerald-ice"]).toBeDefined();
     expect(PALETTES["royal-velvet"]).toBeDefined();
   });
+
+  it("extracts custom glassColor or falls back to default #7828b4", () => {
+    const configDefault = extractPrismConfig({});
+    expect(configDefault.glassColor).toBe("#7828b4");
+
+    const configCustom = extractPrismConfig({ "optics.glassColor": "#00d2a0" });
+    expect(configCustom.glassColor).toBe("#00d2a0");
+
+    const configCustomObj = extractPrismConfig({ "optics.glassColor": { hex: "#ff901a" } });
+    expect(configCustomObj.glassColor).toBe("#ff901a");
+  });
 });

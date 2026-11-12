@@ -78,6 +78,25 @@ function drawIlluminatedLeadingEdge(
   ctx.lineTo(x + width, y + height - r);
 }
 
+export function parseHexToRgb(hexStr?: string): { r: number; g: number; b: number } {
+  if (!hexStr) return { r: 120, g: 40, b: 180 };
+  let hex = hexStr.replace(/^#/, "").trim();
+  if (hex.length === 3) {
+    hex = hex.split("").map((c) => c + c).join("");
+  }
+  if (hex.length >= 6) {
+    const num = parseInt(hex.slice(0, 6), 16);
+    if (!Number.isNaN(num)) {
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255,
+      };
+    }
+  }
+  return { r: 120, g: 40, b: 180 };
+}
+
 export function renderPrismScene(
   ctx: CanvasRenderingContext2D,
   scene: EvaluatedScene,
@@ -160,6 +179,7 @@ export function renderPrismScene(
 
   // 4. Glass Panes Layer with Multi-Pass Photorealistic Glowing Edges & Refraction
   const glowFactor = config.edgeGlow / 100;
+  const glassRgb = parseHexToRgb(config.glassColor ?? "#7828b4");
 
   for (const pane of scene.panes) {
     ctx.save();
@@ -176,7 +196,7 @@ export function renderPrismScene(
     ctx.shadowBlur = 28 * pane.depth;
     ctx.shadowOffsetX = 10 * pane.depth;
     ctx.shadowOffsetY = 16 * pane.depth;
-    ctx.fillStyle = "rgba(10, 5, 20, 0.18)";
+    ctx.fillStyle = `rgba(${Math.round(glassRgb.r * 0.08)}, ${Math.round(glassRgb.g * 0.08)}, ${Math.round(glassRgb.b * 0.08)}, 0.18)`;
     drawRoundedRect(ctx, -halfW, -halfH, pane.width, pane.height, cornerR);
     ctx.fill();
     ctx.restore();
@@ -193,11 +213,23 @@ export function renderPrismScene(
       halfW,
       halfH,
     );
+    const r15 = Math.round(255 * 0.85 + glassRgb.r * 0.15);
+    const g15 = Math.round(255 * 0.85 + glassRgb.g * 0.15);
+    const b15 = Math.round(255 * 0.85 + glassRgb.b * 0.15);
+
+    const r55 = Math.round(255 * 0.45 + glassRgb.r * 0.55);
+    const g55 = Math.round(255 * 0.45 + glassRgb.g * 0.55);
+    const b55 = Math.round(255 * 0.45 + glassRgb.b * 0.55);
+
+    const rShadow = Math.round(glassRgb.r * 0.25);
+    const gShadow = Math.round(glassRgb.g * 0.25);
+    const bShadow = Math.round(glassRgb.b * 0.25);
+
     glassGrad.addColorStop(0, `rgba(255, 255, 255, ${pane.opacity * 0.9})`);
-    glassGrad.addColorStop(0.2, `rgba(245, 220, 255, ${pane.opacity * 0.45})`);
-    glassGrad.addColorStop(0.5, `rgba(180, 140, 230, ${pane.opacity * 0.22})`);
-    glassGrad.addColorStop(0.85, `rgba(120, 40, 180, ${pane.opacity * 0.55})`);
-    glassGrad.addColorStop(1, `rgba(30, 10, 60, ${pane.opacity * 0.8})`);
+    glassGrad.addColorStop(0.2, `rgba(${r15}, ${g15}, ${b15}, ${pane.opacity * 0.45})`);
+    glassGrad.addColorStop(0.5, `rgba(${r55}, ${g55}, ${b55}, ${pane.opacity * 0.22})`);
+    glassGrad.addColorStop(0.85, `rgba(${glassRgb.r}, ${glassRgb.g}, ${glassRgb.b}, ${pane.opacity * 0.55})`);
+    glassGrad.addColorStop(1, `rgba(${rShadow}, ${gShadow}, ${bShadow}, ${pane.opacity * 0.8})`);
 
     ctx.fillStyle = glassGrad;
     ctx.fillRect(-halfW, -halfH, pane.width, pane.height);

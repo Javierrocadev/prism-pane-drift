@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PRISM_CONFIG, evaluatePrismScene } from "./prism-pane-drift-model";
-import { renderPrismScene } from "./prism-pane-drift-renderer";
+import { parseHexToRgb, renderPrismScene } from "./prism-pane-drift-renderer";
 
 type Gradient = { stops: [number, string][]; addColorStop: (position: number, color: string) => void };
 
@@ -90,5 +90,46 @@ describe("Prism glass edge integration", () => {
       expect(stops[0]).toEqual([0, "transparent"]);
       expect(stops.at(-1)).toEqual([1, "transparent"]);
     }
+  });
+
+  it("correctly parses hex colors into RGB components", () => {
+    expect(parseHexToRgb("#7828b4")).toEqual({ r: 120, g: 40, b: 180 });
+    expect(parseHexToRgb("#00d2a0")).toEqual({ r: 0, g: 210, b: 160 });
+    expect(parseHexToRgb("fff")).toEqual({ r: 255, g: 255, b: 255 });
+    expect(parseHexToRgb(undefined)).toEqual({ r: 120, g: 40, b: 180 });
+  });
+
+  it("applies customizable glassColor to glass body gradient", () => {
+    const gradients: Gradient[] = [];
+    const stack: Record<string, unknown>[] = [];
+    const state: Record<string, unknown> = { globalAlpha: 1, lineWidth: 1 };
+    const gradient = (): Gradient => {
+      const g: Gradient = {
+        stops: [],
+        addColorStop: (position, color) => { g.stops.push([position, color]); },
+      };
+      gradients.push(g);
+      return g;
+    };
+    const context = new Proxy(state, {
+      get(target, key: string) {
+        if (key === "createLinearGradient" || key === "createRadialGradient") return gradient;
+        if (key === "save") return () => stack.push({ ...target });
+        if (key === "restore") return () => Object.assign(target, stack.pop());
+        return key in target ? target[key] : () => undefined;
+      },
+    }) as unknown as CanvasRenderingContext2D;
+
+    const config = { ...DEFAULT_PRISM_CONFIG, paneCount: 1, grainIntensity: 0, glassColor: "#00d2a0" };
+    const scene = evaluatePrismScene(config, 0);
+    scene.orbs = [];
+    scene.streaks = [];
+    renderPrismScene(context, scene, config, 600, 600);
+
+    // Look for glass gradient containing the custom color rgb(0, 210, 160) at stop 0.85
+    const glassGradient = gradients.find((g) =>
+      g.stops.some(([pos, col]) => pos === 0.85 && col.includes("0, 210, 160")),
+    );
+    expect(glassGradient).toBeDefined();
   });
 });

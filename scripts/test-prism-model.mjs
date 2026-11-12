@@ -76,3 +76,9 @@ test("Prism Pane Drift: speed scaling supports ultra-slow controls down to 5% wi
   assert.ok(Math.abs(slowStart.panes[0].centerX - slowEnd.panes[0].centerX) < 0.001);
 });
 
+test("Prism Pane Drift: glassColor default is #7828b4 and supports custom overrides", () => {
+  assert.equal(DEFAULT_PRISM_CONFIG.glassColor, "#7828b4");
+  const custom = { ...DEFAULT_PRISM_CONFIG, glassColor: "#00d2a0" };
+  assert.equal(custom.glassColor, "#00d2a0");
+});
+

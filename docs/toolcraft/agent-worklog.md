@@ -6,9 +6,24 @@ Mode: product
 
 Prism Pane Drift is an existing animated glass composition. This change is a focused animation correction, not certification of the pre-existing product implementation.
 
-Active change: subtle-laser-streaks-and-fluidity
+Active change: customizable-glass-color
 
 ## Decision Trail
+
+### Customizable glass color
+
+- Entry type: focused
+- Change ID: customizable-glass-color
+- Request: User requested customizability for the glass pane internal body/tint color ("personalizable mejor") rather than fixed purple stops.
+- Changed owner: `src/app/app-schema.ts`, `src/app/prism-pane-drift-model.ts`, `src/app/prism-pane-drift-renderer.ts`, `src/app/prism-pane-drift-model.test.ts`, `src/app/prism-pane-drift-renderer.test.ts`, `scripts/test-prism-model.mjs`.
+- Decision:
+  1. Added a color picker control under the `optics` section (`optics.glassColor`, labeled "Color del Cristal", default `#7828b4`).
+  2. Extended `PrismConfig`, `DEFAULT_PRISM_CONFIG`, and `extractPrismConfig` in `prism-pane-drift-model.ts` to support `glassColor` (accepting hex string or color object with default fallback `#7828b4`).
+  3. In `prism-pane-drift-renderer.ts`, added `parseHexToRgb` to dynamically derive the 5 linear gradient stops for the glass body (`glassGrad`: specular highlight, light tint, midtone, core color, deep shadow) and tinted the ambient drop shadow based on the chosen glass color.
+  4. Preserved visual backward compatibility: default `#7828b4` produces the exact original amethyst/violet refractions while users can now choose any tint (e.g. emerald, cyan, amber, ruby, sapphire).
+- User-visible result: Users can change the interior color of the glass panes from the "Óptica & Refracción" controls panel. Default remains the signature purple/violet; choosing another color immediately shifts the glass body and ambient shadow realistically.
+- Verification: Vitest unit tests passed (12 tests across `prism-pane-drift-model.test.ts` and `prism-pane-drift-renderer.test.ts`). `scripts/test-prism-model.mjs` passed (6 tests). `npm run files:check` and `git diff --check` passed. Playwright e2e suite validated.
+- Risks: Existing starter acceptance metadata remains outside this focused visual customizability enhancement. No framework or bootstrap edits.
 
 ### Subtle laser streaks and animation fluidity
 

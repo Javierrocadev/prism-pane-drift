@@ -112,6 +112,13 @@ export const appSchema = defineToolcraft({
                 variant: "continuous",
                 applicability: { mode: "always" },
               },
+              glassColor: {
+                type: "color",
+                target: "optics.glassColor",
+                label: "Color del Cristal",
+                defaultValue: "#7828b4",
+                applicability: { mode: "always" },
+              },
             },
           },
           {
